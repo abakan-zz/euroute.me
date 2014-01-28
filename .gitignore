@@ -1,0 +1,6 @@
+*.py[co]
+*.ipynb
+
+rawhtml
+routeme
+data
