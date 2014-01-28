@@ -58,6 +58,14 @@
        background-color: rgb(215,25,28);
        border: 2px solid rgb(215,25,28);
      }
+
+    .modal-dialog {
+        width: 80%;
+    }
+    .modal-body {
+        height: 600px;
+    }
+
     </style>
     {% if gmap %}
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
@@ -257,6 +265,12 @@ function resizeCircles() {
   }
 }
 
+function showPage(city, place, url) {
+  $('#myModalLabel').html(place + ', ' + city + ' <span class="glyphicon glyphicon-new-window"></span>');
+  $('#placews').attr('src', url);
+  $('#myModal').modal('show');
+  $('#newpage').attr('href', url);
+}
 
 function showPlaces(cid) {
 
@@ -296,7 +310,12 @@ function showPlaces(cid) {
 
           content += '<ul class="list-unstyled">'
           $.each(v, function(i, l) {
-            content += '<li><a href="' + l[2] + '" target="_blank">' + l[1] + '</a></li>';
+            if (l[2] != "") {
+              content += '<li><a href="#" onclick="showPage(\'' + city.name + '\', \''+ l[1] +'\', \''+ l[2] +'\')">' + l[1] + '</a></li>';
+            } else {
+              content += '<li>' + l[1] + '</li>';
+            }
+
           });
           content += '</ul></div></div></div>'
           count += 1;
@@ -640,6 +659,19 @@ $().ready(function() {
   </div>
 </div>
 
-
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <a href="" target="_blank" id="newpage"><h4 class="modal-title" id="myModalLabel"></h4></a>
+      </div>
+      <div class="modal-body">
+        <iframe src="" width="100%" height="100%" frameborder="0" id="placews"></iframe>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
 {% endblock %}
