@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+{% block title %}Route Me - Where're you going?{% endblock %}
+{% block head %}
+    <link href="static/css/typeahead.css" rel="stylesheet">
+    <script src="static/js/typeahead.min.js"></script>
+{% endblock %}
+{% block body %}
+      <div class="page-header" id="banner">
+        <div class="row">
+          <div class="col-lg-6">
+            <h1>Route Me</h1>
+            <p class="lead">Make the most out of your trip!</p>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="row">
+
+        <div class="col-lg-12">
+          <form action="route" method="get">
+            <div class="form-group" id="where">
+              <label class="control-label" for="inputDefault">Where in Europe will you start?</label>
+              <br/>
+              <div>
+                <input type="text" name="origin" id="origin" placeholder="Start from ..." class="form-control input-lg col-md-3">
+                <input type="text" name="destin" id="destin" placeholder="Go to ..." class="form-control input-lg col-md-3">
+              </div>
+              <br/>
+              <div class="btn-group">
+                <button type="button" class="btn btn-danger">Round trip</button>
+                <button type="button" class="btn btn-warning">One way</button>
+              </div>
+            </div>
+            <div class="form-group" id="ndays">
+              <label class="control-label" for="inputDefault">How many days will you stay?</label>
+              <br/>
+              <div class="btn-group">
+                <button type="button" class="btn btn-warning btn-lg">3</button>
+                <button type="button" class="btn btn-warning btn-lg">4</button>
+                <button type="button" class="btn btn-warning btn-lg">5</button>
+                <button type="button" class="btn btn-warning btn-lg">6</button>
+                <button type="button" class="btn btn-warning btn-lg">7</button>
+                <button type="button" class="btn btn-warning btn-lg">8</button>
+                <button type="button" class="btn btn-warning btn-lg">9</button>
+                <button type="button" class="btn btn-warning btn-lg">10</button>
+              </div>
+                <input type="hidden" name="days" id="days" value="" />
+              </div>
+              <div class="form-group" id="submit">
+                <button type="button" class="btn btn-success btn-lg" id="transit">
+                  <img class="glyphicon" src="/static/img/glyphicons/train.png"> Hop on a Train</button>
+                <button type="button" class="btn btn-info btn-lg" id="driving">
+                  <img src="/static/img/glyphicons/car.png"> Hit the Road</button>
+                <input type="hidden" name="mode" id="mode" value="" />
+              </div>
+            </form>
+          </div>
+        </div>
+
+<script type="text/javascript">
+
+$('#where > div.btn-group button').click(function(){
+  $('div.btn-group button').removeClass('btn-danger').addClass('btn-warning');
+  if ($(this).addClass('btn-danger').text() == "One way") {
+    $("#destin").show();
+    $(".twitter-typeahead:nth-of-type(2)").show();
+  } else {
+    $("#destin").hide();
+    $(".twitter-typeahead:nth-of-type(2)").hide();
+  }
+
+});
+
+$('#ndays > div.btn-group button').click(function(){
+  $('#ndays > div.btn-group button').removeClass('btn-danger').addClass('btn-warning');
+  $("#days").attr('value', $(this).addClass('btn-danger').text());
+});
+
+$('#origin').typeahead({
+  name: 'origin',
+  //prefetch: '/q?cities=B',
+  remote: '/json/cities?q=%QUERY',
+  limit: 10
+});
+
+$('#destin').typeahead({
+  name: 'destin',
+  //prefetch: '/q?cities=B',
+  remote: '/json/cities?q=%QUERY',
+  limit: 10
+});
+$(".twitter-typeahead:nth-of-type(2)").hide();
+
+
+$('#submit button').click(function(){
+  var error = false;
+  if ($("#days").val() === "") {
+    $("#ndays").addClass('has-error');
+    error = true;
+  } else {
+    $("#ndays").removeClass('has-error');
+  }
+
+  if ($("#origin").val() === "") {
+    $("#where").addClass('has-error');
+    error = true;
+  } else {
+    $("#where").removeClass('has-error');
+  }
+
+  if (error){return}
+
+  $("#mode").attr('value', $(this).attr("id"));
+  $("form").submit();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,645 @@
+{% extends "layout.html" %}
+{% block title %}{{ city|safe }} it is!{% endblock %}
+{% block head %}
+    <link href="static/css/colorbrewer.css" rel="stylesheet">
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+      {% if gmap %}
+      .map-canvas {
+        height: 600px;
+      }
+      {% endif %}
+      .btn-maybe {
+        width: 47px;
+      }
+      .btn-yesno {
+        width: 32px;
+      }
+      .btn-hours {
+        width: 37px;
+      }
+      .infowindow {
+       color: black;
+       font-family: "Lucida Grande", "Arial", sans-serif;
+     }
+     .control-label {
+       font-size: 14px;
+       font-weight: bold;
+     }
+     .eta {
+       color: black;
+       font-family: "Lucida Grande", "Arial", sans-serif;
+       font-size: 12px;
+       font-weight: bold;
+       text-align: center;
+       white-space: nowrap;
+     }
+     .eta-1 {
+       background-color: rgb(26,150,65);
+       border: 2px solid rgb(26,150,65);
+     }
+     .eta-2 {
+       background-color: rgb(166,217,106);
+       border: 2px solid rgb(166,217,106);
+     }
+     .eta-3 {
+       background-color: rgb(255,255,191);
+       border: 2px solid rgb(255,255,191);
+     }
+     .eta-4 {
+       background-color: rgb(253,174,97);
+       border: 2px solid rgb(253,174,97);
+     }
+     .eta-5 {
+       background-color: rgb(215,25,28);
+       border: 2px solid rgb(215,25,28);
+     }
+    </style>
+    {% if gmap %}
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+    <script src="static/js/markerwithlabel.js"></script>
+    {% endif %}
+    <script type="text/javascript">
+var cities = {{ cities|safe }};
+var factoids = {{ factoids|safe }}
+var links = {{ links|safe }}
+var routes = {{ routes|safe }};
+var scores = {{ scores|safe }};
+var origin = {{ origin }};
+var destin = {{ destin }};
+var oneway = {{ oneway }};
+var config = {current: -1, days: {{ days }}, mode: "{{ mode }}", tabs: 1,
+              active: 0, infowin: -1};
+var categories = {
+  art: 'Art Galleries and Collections',
+  historic: 'History Museums and Historic Sights',
+  nature: 'Gardens, Parks, Zoos, and Aquariums',
+  technical: 'Technical Museums',
+  amusement: 'Fun and Attraction Parks'
+}
+var lcolor = ["rgb(26,150,65)", "rgb(166,217,106)",
+              "rgb(255,255,191)", "rgb(253,174,97)",
+              "rgb(215,25,28)"];
+
+{% if gmap %}
+var map;
+function initialize() {
+  var mapOptions = {
+    zoom: 5,
+    center: calcCenter(0)
+  };
+  map = new google.maps.Map(document.getElementById('map-canvas'),
+      mapOptions);
+  showCity(origin);
+  if (origin != destin) {showCity(destin)}
+  showCircles();
+  showRoute(0);
+  makeTabs();
+}
+{% else %}
+var google;
+{% endif %}
+
+function makeTabs() {
+  var li, text;
+  $('#btn-route > li').remove()
+  var ul = $('#btn-route')
+  var ntabs = config.tabs;
+  if (routes.length < ntabs) {ntabs = routes.length}
+
+  for (i = 0; i < ntabs; i++) {
+    li = $('<li>');
+    if (!i) {
+      text = "Top route"
+    } else if (i == 5) {
+      ul.append(li);
+      ul = $('<ul>').addClass('dropdown-menu').attr('role', 'menu').attr('aria-labelledby', "rdd");
+      li.addClass('dropdown').append($('<a>').attr('href', "#").addClass('dropdown-toggle').attr('data-toggle', "dropdown").attr('id', 'rdd')
+      .append($('<strong>').text( '#6+ ').append('<span class="caret"></span>'))).append(ul);
+      text = "#6"
+      li = $('<li>');
+
+    } else {
+      text = "#" + (i+1);
+    }
+
+    if (i == config.active) {
+      li.addClass('active');
+    }
+
+
+    li.append($('<a>').attr('href', "#route1").attr('data-toggle', "tab")
+      .append($('<strong>').text( text)));
+      //.append($('<span>').addClass('badge').text(Math.round(routes[i].score))));
+    li.attr('route', i);
+    if (i >= 5) {
+      li.attr('tab-index', "-1")
+    }
+    li.click(function(){showRoute($(this).attr('route'))});
+    ul.append(li);
+  }
+
+  if (config.tabs < routes.length) {
+    text = ntabs > 1 ? '...' : 'more ...';
+    li = $('<li>');
+    li.append($('<a>').attr('href', "#route1").attr('data-toggle', "tab")
+      .append($('<strong>').text( text)));
+    li.click(function(){
+      config.tabs += 5;
+      makeTabs()
+    });
+    ul.append(li);
+  }
+
+}
+
+function fortyFive() {
+  //https://developers.google.com/maps/documentation/javascript/examples/aerial-simple
+  map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+  map.setCenter(new google.maps.LatLng(41.8902102, 12.4922309));
+  map.setZoom(18);
+  map.setTilt(45);
+}
+
+function fiftyCent() {
+  map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+  map.setCenter(calcCenter(0));
+  map.setZoom(5);
+  map.setTilt(0);
+}
+
+function calcCenter(rid) {
+ return calcCenter2(routes[rid].route);
+}
+
+function calcCenter2(route) {
+  var lat = 0.0;
+  var lng = 0.0;
+  var count = route.length - oneway;
+  for (i = 0; i < count; i++) {
+    var city = cities[route[i]];
+    lat += city.lat;
+    lng += city.lng;
+  }
+  return new google.maps.LatLng(lat / count, lng / count);
+}
+
+function showLine(i, j) {
+
+  if (links[i][j].line) {
+    links[i][j].line.setMap(map);
+    links[i][j].label.setMap(map);
+  } else {
+    var time = links[i][j].time;
+    var eta = Math.floor(time / 120);
+    links[i][j].line = new google.maps.Polyline({
+        path: [cities[i].coords, cities[j].coords],
+        geodesic: true,
+        strokeColor: lcolor[eta],
+        strokeOpacity: 1.0,
+        strokeWeight: 4,
+        map: map
+      });
+    // position: calcCenter2([i, j]),
+    // position: cities[i].coords,
+    links[i][j].label = new MarkerWithLabel({
+       position: calcCenter2(oneway ? [i, j, 0] : [i, j]),
+       draggable: false,
+       map: map,
+       labelContent: formatTime(time),
+       labelAnchor: new google.maps.Point(22, 0),
+       labelClass: "eta eta-" + Math.ceil(time / 120),
+       labelStyle: {opacity: 1.0},
+       icon: []
+     });
+  }
+};
+
+function hideLine(i, j) {
+  links[i][j].line.setMap(null);
+  links[i][j].label.setMap(null);
+}
+
+
+function showCircles() {
+  for (i = 1; i < scores.length; i++) {
+    if (cities[i]) {
+      cities[i].coords = new google.maps.LatLng(cities[i].lat, cities[i].lng)
+      showCircle(i);
+    }
+  }
+}
+
+function showCircle(i) {
+  var city = cities[i];
+  city.circle = new google.maps.Circle({
+      strokeColor: '#FF0000',
+      strokeOpacity: 0.8,
+      strokeWeight: 2,
+      fillColor: '#FF0000',
+      fillOpacity: 0.35,
+      map: map,
+      center: city.coords,
+      radius: scores[i]
+    })
+}
+
+
+function resizeCircles() {
+  for (i = 1; i < scores.length; i++) {
+    if (cities[i]) {
+      cities[i].circle.setRadius(scores[i]);
+    }
+  }
+}
+
+
+function showPlaces(cid) {
+
+  if (cid === config.infowin) {
+    cities[config.infowin].infowindow.close()
+    config.infowin = -1;
+    return;
+  } else if (config.infowin >= 0) {
+    cities[config.infowin].infowindow.close()
+  }
+  config.infowin = cid;
+    city = cities[cid];
+    $.getJSON( "json/places", {
+      city: city.id,
+      arts: $('.arts.active').attr('value'),
+      history: $('.history.active').attr('value'),
+      technical: $('.technical.active').attr('value'),
+      amusement: $('.amusement.active').attr('value'),
+      nature: $('.nature.active').attr('value')
+    }, function( data ) {
+
+      var content = '<div class="infowindow"><h4>' + city.name + '</h4>';
+      content += '<div class="panel-group" id="accordion">';
+      var count = 0;
+      $.each(data, function(k, v) {
+        if (v.length) {
+          content += '<div class="panel panel-default">'
+          content += '<div class="panel-heading">'
+          content += '<h4 class="panel-title">'
+          content += '<a data-toggle="collapse" data-parent="#accordion" href="#' + city.id + k + '">'
+          content += categories[k]
+          content += '</a>'
+          content += '</h4>'
+          content += '</div>'
+          content += '<div id="' + city.id + k + '" class="panel-collapse collapse' + (count ? '' : ' in') + '">'
+          content += '<div class="panel-body">'
+
+          content += '<ul class="list-unstyled">'
+          $.each(v, function(i, l) {
+            content += '<li><a href="' + l[2] + '" target="_blank">' + l[1] + '</a></li>';
+          });
+          content += '</ul></div></div></div>'
+          count += 1;
+        }
+      });
+      content += '</div>';
+      city.infowindow = new google.maps.InfoWindow({
+        maxWidth: 500,
+        content: content
+      });
+      city.infowindow.open(map, city.marker)
+    });
+
+
+}
+
+function showCity(i) {
+  var city = cities[i];
+  if (city.marker) {
+    city.marker.setMap(map);
+    city.marker.setAnimation(google.maps.Animation.DROP);
+  } else {
+    city.coords = new google.maps.LatLng(city.lat, city.lng)
+    city.marker = new google.maps.Marker({
+      map: map,
+      position: city.coords,
+      title: city.name,
+      animation: google.maps.Animation.DROP
+    });
+    google.maps.event.addListener(city.marker,
+      'click', function() {showPlaces(city.id)}
+    );
+  }
+}
+function hideCity(i) {
+  cities[i].marker.setMap(null);
+}
+
+function hideRoute() {
+
+  if (config.current >= 0) {
+    var route = routes[config.current].route;
+    var i = route[0];
+    for (var k = 1; k < route.length - 1; k++) {
+      var j = route[k];
+      hideCity(j);
+      hideLine(i, j);
+      i = j;
+    }
+    hideLine(i, route[route.length-1])
+  }
+}
+
+function zoomRoute(r) {
+  var route = routes[r].route;
+  var bounds = new google.maps.LatLngBounds();
+  for (var i = 0; i < route.length; i++) {
+    bounds.extend(cities[route[i]].coords);
+  }
+  map.fitBounds(bounds);
+};
+{% if gmap %}
+function showRoute(r) {
+  config.active = r;
+  hideRoute();
+  map.setCenter(calcCenter(r));
+  config.current = r;
+  var route = routes[r].route;
+  var i = route[0];
+  for (k = 1; k < route.length - 1; k++) {
+    var j = route[k];
+    var city = cities[j];
+    showCity(j);
+    showLine(i, j);
+    //hideCity(j);
+    //showCity(j);
+    i = j;
+  }
+  showLine(i, route[route.length-1]);
+  zoomRoute(r);
+  showTable(r);
+};
+{% else %}
+function showRoute(r) {
+  showTable(r);
+}
+{% endif %}
+
+function formatTime(time) {
+  var mins = time % 60;
+  return Math.floor(time / 60) + ':' + (mins < 10 ? '0':'') + mins;
+}
+
+var catmap = {
+  arts: 'Art', amusement: 'Amusement', technical: 'Technical',
+  history: 'Historic', nature: 'Nature'
+}
+
+function pickFactoids(r) {
+  var facts = [];
+  var route = routes[r].route;
+  for (i = 0; i < route.length - oneway; i++) {
+    var cid = route[i]
+    var cats = [];
+    $('.category.active').each(function() {
+      var c = $(this);
+      var cat = catmap[c.attr("category")];
+      if (parseFloat(c.val()) > 0.5 && cid in factoids && cat in factoids[cid]) {
+        cats[cats.length] = cat;
+      }
+    });
+
+    if (!cats.length) {
+      $('.category.active').each(function() {
+        var c = $(this);
+        var cat = catmap[c.attr("category")];
+        if (parseFloat(c.val()) > 0.5 && cid in factoids && cat in factoids[cid]) {
+          cats[cats.length] = cat;
+        }
+      });
+    }
+
+    if (cats.length) {
+      cat = cats[Math.floor(Math.random() * cats.length)]
+      var f = factoids[cid][cat];
+      facts[i] = f[Math.floor(Math.random() * f.length)]
+
+    } else {
+      facts[i] = ', connecting you to places of interest!'
+    }
+
+  }
+  return facts;
+}
+
+function showTable(r) {
+
+  var facts = pickFactoids(r);
+
+  var tbody = $("#rtable > tbody");
+  $("#rtable > tbody > tr").remove();
+  var route = routes[r].route;
+  var i, j, r = 0, city;
+  var prev, append;
+  var text, row, rows = [];
+
+  for (k = 0; k < route.length - oneway; k++) {
+    j = route[k];
+    city = cities[j];
+    if (k && links[i][j].time > 300) {
+      rows[r] = {text: formatTime(links[i][j].time) +
+                  ' hours from ' + prev.name + ' to ' + city.name,
+                  days: 1, score: 0, travel: true}
+      r++;
+    }
+    rows[r] = {text: city.name, fact: facts[k],
+               days: 1, score: scores[j], cid: j, travel: false}
+    r++;
+    i = j;
+    prev = city;
+  }
+
+  var max, val;
+  while (r < config.days) {
+    val = 0;
+    for (k = 0; k < rows.length; k++) {
+      if (rows[k].score > val) {
+        val = rows[k].score;
+        max = k;
+      }
+    }
+    rows[max].days++;
+    rows[max].score = scores[rows[max].cid] / rows[max].days;
+    r++;
+  }
+
+
+
+  for (k = 0; k < rows.length; k++) {
+      row = rows[k]
+      if (row.travel) {
+        text = "1 day travel - " + (row.days > 1 ? "s":"") + " " + row.text;
+        tbody.append($("<tr>").append($("<td>").append($('<em>').text(text))));
+      } else {
+        text = row.days + " day" + (row.days > 1 ? "s":"") + " in " + row.text;
+        tbody.append($("<tr>").append($("<td>").append($("<strong>").css('font-size', '18px').text(text)).append($('<em>').text(row.fact))).attr('cid', row.cid).css('cursor','pointer').click(function(){showPlaces($(this).attr('cid'))}));
+      }
+
+  }
+}
+
+{% if gmap %}
+google.maps.event.addDomListener(window, 'load', initialize);
+{% endif %}
+$().ready(function() {
+
+  {% if not gmap %}
+  showRoute(0);
+  makeTabs()
+  {% endif %}
+
+  $(".btn-xs").on("click", function () {
+
+    var btn = $(this);
+    var prev = $("." + btn.attr("category") + '.active');
+    $("." + btn.attr("category")).removeClass('active');
+    btn.addClass('active');
+
+    var arts = parseFloat($('.arts.active').attr('value'));
+    var history = parseFloat($('.history.active').attr('value'));
+    var technical = parseFloat($('.technical.active').attr('value'));
+    var amusement = parseFloat($('.amusement.active').attr('value'));
+    var nature = parseFloat($('.nature.active').attr('value'));
+
+    if (!(arts || history || technical || amusement || nature)) {
+      alert('Really? There must be something you are interested in :|');
+      $("." + btn.attr("category")).removeClass('active');
+      prev.addClass('active');
+      return;
+    }
+
+
+
+    $.getJSON( "json/reroute", {
+        origin: origin, destin: destin, days: config.days,
+        mode: config.mode, hours: $('.hours.active').attr('value'),
+        arts: $('.arts.active').attr('value'),
+        history: $('.history.active').attr('value'),
+        technical: $('.technical.active').attr('value'),
+        amusement: $('.amusement.active').attr('value'),
+        nature: $('.nature.active').attr('value')
+      }, function( data ) {
+        {% if gmap %}
+        hideRoute();
+        {% endif %}
+        routes = data.routes;
+        links = data.links;
+        scores = data.scores;
+        config.current = -1;
+        {% if gmap %}
+        resizeCircles();
+        {% endif %}
+        showRoute(0);
+        config.active = 0;
+        makeTabs();
+    });
+
+  });
+
+});
+
+    </script>
+{% endblock %}
+{% block body %}
+<div class="row">
+
+  <div id="map-canvas" class="map-canvas col-md-7">
+
+  </div>
+
+  <div class="col-md-5">
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h3 class="panel-title">What would you like to see?</h3>
+      </div>
+      <div class="panel-body">
+
+          <div class="col-lg-2 col-sm-2 control-label">Arts</div>
+          <div class="col-lg-4 col-sm-4">
+            <div class="btn-group">
+              <button type="button" value="1.0" category="art" class="category arts btn btn-success btn-xs btn-yesno colorme active">Yes</button>
+              <button type="button" value="0.5" category="art" class="category arts btn btn-warning btn-xs btn-maybe colorme">Maybe</button>
+              <button type="button" value="0.0" category="art" class="category arts btn btn-danger btn-xs btn-yesno colorme">No</button>
+            </div>
+          </div>
+          <div class="col-lg-2 col-sm-2 control-label">History</div>
+          <div class="col-lg-4 col-sm-4">
+            <div class="btn-group">
+              <button type="button" value="1.0" category="history" class="category history btn btn-success btn-xs btn-yesno colorme active">Yes</button>
+              <button type="button" value="0.5" category="history" class="category history btn btn-warning btn-xs btn-maybe colorme">Maybe</button>
+              <button type="button" value="0.0" category="history" class="category history btn btn-danger btn-xs btn-yesno colorme">No</button>
+            </div>
+          </div>
+
+          <div class="col-lg-2 col-sm-2 control-label">Nature</div>
+          <div class="col-lg-4 col-sm-4">
+            <div class="btn-group">
+              <button type="button" value="1.0" category="nature" class="category nature btn btn-success btn-xs btn-yesno colorme">Yes</button>
+              <button type="button" value="0.5" category="nature" class="category nature btn btn-warning btn-xs btn-maybe active">Maybe</button>
+              <button type="button" value="0.0" category="nature" class="category nature btn btn-danger btn-xs btn-yesno colorme">No</button>
+            </div>
+          </div>
+          <div class="col-lg-2 col-sm-2 control-label">Technical</div>
+          <div class="col-lg-4 col-sm-4">
+            <div class="btn-group">
+              <button type="button" value="1.0" category="technical" class="category technical btn btn-success btn-xs btn-yesno colorme">Yes</button>
+              <button type="button" value="0.5" category="technical" class="category technical btn btn-warning btn-xs btn-maybe active">Maybe</button>
+              <button type="button" value="0.0" category="technical" class="category technical btn btn-danger btn-xs btn-yesno colorme">No</button>
+            </div>
+          </div>
+          <div class="col-lg-2 col-sm-2 control-label">Fun</div>
+          <div class="col-lg-4 col-sm-4">
+            <div class="btn-group">
+              <button type="button" value="1.0" category="amusement" class="category amusement btn btn-success btn-xs btn-yesno colorme">Yes</button>
+              <button type="button" value="0.5" category="amusement" class="category amusement btn btn-warning btn-xs btn-maybe active">Maybe</button>
+              <button type="button" value="0.0" category="amusement" class="category amusement btn btn-danger btn-xs btn-yesno colorme">No</button>
+            </div>
+          </div>
+          <div class="col-lg-2 col-sm-2 control-label">Travel</div>
+          <div class="col-lg-4 col-sm-4">
+            <div class="btn-group">
+              <button type="button" value="4" category="hours" class="hours btn btn-success btn-xs btn-hours colorme active">4 h</button>
+              <button type="button" value="7" category="hours" class="hours btn btn-warning btn-xs btn-hours colorme">7 h</button>
+              <button type="button" value="10" category="hours" class="hours btn btn-danger btn-xs btn-hours colorme">10 h</button>
+            </div>
+          </div>
+
+      </div>
+    </div>
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h3 class="panel-title">Top routes for {{ days }} days
+          {% if oneway %} around {{city}} {% else %} from {{ city }} to {{ dest }} {% endif %}</h3>
+      </div>
+      <div class="panel-body">
+        <ul id="btn-route" class="nav nav-tabs" style="margin-bottom: 15px;">
+          <li class="active"><a href="#route1" data-toggle="tab" onclick="showRoute(0);"><strong>1</strong></a></li>
+        </ul>
+        <div>
+          <table id="rtable" class="table table-striped table-bordered table-hover">
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+  </div>
+</div>
+
+
+
+{% endblock %}
