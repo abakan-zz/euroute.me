@@ -284,11 +284,11 @@ function showPlaces(cid) {
     city = cities[cid];
     $.getJSON( "json/places", {
       city: city.id,
-      arts: $('.arts.active').attr('value'),
-      history: $('.history.active').attr('value'),
-      technical: $('.technical.active').attr('value'),
-      amusement: $('.amusement.active').attr('value'),
-      nature: $('.nature.active').attr('value')
+      arts: $('.arts.btn-primary').attr('value'),
+      history: $('.history.btn-primary').attr('value'),
+      technical: $('.technical.btn-primary').attr('value'),
+      amusement: $('.amusement.btn-primary').attr('value'),
+      nature: $('.nature.btn-primary').attr('value')
     }, function( data ) {
 
       var content = '<div class="infowindow"><h4>' + city.name + '</h4>';
@@ -419,7 +419,7 @@ function pickFactoids(r) {
   for (i = 0; i < route.length - oneway; i++) {
     var cid = route[i]
     var cats = [];
-    $('.category.active').each(function() {
+    $('.category.btn-primary').each(function() {
       var c = $(this);
       var cat = catmap[c.attr("category")];
       if (parseFloat(c.val()) > 0.5 && cid in factoids && cat in factoids[cid]) {
@@ -428,10 +428,20 @@ function pickFactoids(r) {
     });
 
     if (!cats.length) {
-      $('.category.active').each(function() {
+      $('.category.btn-primary').each(function() {
         var c = $(this);
         var cat = catmap[c.attr("category")];
         if (parseFloat(c.val()) > 0.5 && cid in factoids && cat in factoids[cid]) {
+          cats[cats.length] = cat;
+        }
+      });
+    }
+
+    if (!cats.length) {
+      $('.category.btn-primary').each(function() {
+        var c = $(this);
+        var cat = catmap[c.attr("category")];
+        if (cid in factoids && cat in factoids[cid]) {
           cats[cats.length] = cat;
         }
       });
@@ -519,20 +529,20 @@ $().ready(function() {
   $(".btn-xs").on("click", function () {
 
     var btn = $(this);
-    var prev = $("." + btn.attr("category") + '.active');
-    $("." + btn.attr("category")).removeClass('active');
-    btn.addClass('active');
+    var prev = $("." + btn.attr("category") + '.btn-primary');
+    $("." + btn.attr("category")).removeClass('btn-primary');
+    btn.addClass('btn-primary');
 
-    var arts = parseFloat($('.arts.active').attr('value'));
-    var history = parseFloat($('.history.active').attr('value'));
-    var technical = parseFloat($('.technical.active').attr('value'));
-    var amusement = parseFloat($('.amusement.active').attr('value'));
-    var nature = parseFloat($('.nature.active').attr('value'));
+    var arts = parseFloat($('.arts.btn-primary').attr('value'));
+    var history = parseFloat($('.history.btn-primary').attr('value'));
+    var technical = parseFloat($('.technical.btn-primary').attr('value'));
+    var amusement = parseFloat($('.amusement.btn-primary').attr('value'));
+    var nature = parseFloat($('.nature.btn-primary').attr('value'));
 
     if (!(arts || history || technical || amusement || nature)) {
       alert('Really? There must be something you are interested in :|');
-      $("." + btn.attr("category")).removeClass('active');
-      prev.addClass('active');
+      $("." + btn.attr("category")).removeClass('btn-primary');
+      prev.addClass('btn-primary');
       return;
     }
 
@@ -540,12 +550,12 @@ $().ready(function() {
 
     $.getJSON( "json/reroute", {
         origin: origin, destin: destin, days: config.days,
-        mode: config.mode, hours: $('.hours.active').attr('value'),
-        arts: $('.arts.active').attr('value'),
-        history: $('.history.active').attr('value'),
-        technical: $('.technical.active').attr('value'),
-        amusement: $('.amusement.active').attr('value'),
-        nature: $('.nature.active').attr('value')
+        mode: config.mode, hours: $('.hours.btn-primary').attr('value'),
+        arts: $('.arts.btn-primary').attr('value'),
+        history: $('.history.btn-primary').attr('value'),
+        technical: $('.technical.btn-primary').attr('value'),
+        amusement: $('.amusement.btn-primary').attr('value'),
+        nature: $('.nature.btn-primary').attr('value')
       }, function( data ) {
         {% if gmap %}
         hideRoute();
@@ -586,50 +596,50 @@ $().ready(function() {
           <div class="col-lg-2 col-sm-2 control-label">Arts</div>
           <div class="col-lg-4 col-sm-4">
             <div class="btn-group">
-              <button type="button" value="1.0" category="art" class="category arts btn btn-success btn-xs btn-yesno colorme active">Yes</button>
-              <button type="button" value="0.5" category="art" class="category arts btn btn-warning btn-xs btn-maybe colorme">Maybe</button>
-              <button type="button" value="0.0" category="art" class="category arts btn btn-danger btn-xs btn-yesno colorme">No</button>
+              <button type="button" value="1.0" category="arts" class="category arts btn btn-primary btn-xs btn-yesno colorme">Yes</button>
+              <button type="button" value="0.5" category="arts" class="category arts btn btn-xs btn-maybe colorme">Maybe</button>
+              <button type="button" value="0.0" category="arts" class="category arts btn btn-xs btn-yesno colorme">No</button>
             </div>
           </div>
           <div class="col-lg-2 col-sm-2 control-label">History</div>
           <div class="col-lg-4 col-sm-4">
             <div class="btn-group">
-              <button type="button" value="1.0" category="history" class="category history btn btn-success btn-xs btn-yesno colorme active">Yes</button>
-              <button type="button" value="0.5" category="history" class="category history btn btn-warning btn-xs btn-maybe colorme">Maybe</button>
-              <button type="button" value="0.0" category="history" class="category history btn btn-danger btn-xs btn-yesno colorme">No</button>
+              <button type="button" value="1.0" category="history" class="category history btn btn-primary btn-xs btn-yesno colorme">Yes</button>
+              <button type="button" value="0.5" category="history" class="category history btn btn-xs btn-maybe colorme">Maybe</button>
+              <button type="button" value="0.0" category="history" class="category history btn btn-xs btn-yesno colorme">No</button>
             </div>
           </div>
 
           <div class="col-lg-2 col-sm-2 control-label">Nature</div>
           <div class="col-lg-4 col-sm-4">
             <div class="btn-group">
-              <button type="button" value="1.0" category="nature" class="category nature btn btn-success btn-xs btn-yesno colorme">Yes</button>
-              <button type="button" value="0.5" category="nature" class="category nature btn btn-warning btn-xs btn-maybe active">Maybe</button>
-              <button type="button" value="0.0" category="nature" class="category nature btn btn-danger btn-xs btn-yesno colorme">No</button>
+              <button type="button" value="1.0" category="nature" class="category nature btn btn-xs btn-yesno colorme">Yes</button>
+              <button type="button" value="0.5" category="nature" class="category nature btn btn-primary btn-xs btn-maybe">Maybe</button>
+              <button type="button" value="0.0" category="nature" class="category nature btn btn-xs btn-yesno colorme">No</button>
             </div>
           </div>
           <div class="col-lg-2 col-sm-2 control-label">Technical</div>
           <div class="col-lg-4 col-sm-4">
             <div class="btn-group">
-              <button type="button" value="1.0" category="technical" class="category technical btn btn-success btn-xs btn-yesno colorme">Yes</button>
-              <button type="button" value="0.5" category="technical" class="category technical btn btn-warning btn-xs btn-maybe active">Maybe</button>
-              <button type="button" value="0.0" category="technical" class="category technical btn btn-danger btn-xs btn-yesno colorme">No</button>
+              <button type="button" value="1.0" category="technical" class="category technical btn btn-xs btn-yesno colorme">Yes</button>
+              <button type="button" value="0.5" category="technical" class="category technical btn btn-primary btn-xs btn-maybe">Maybe</button>
+              <button type="button" value="0.0" category="technical" class="category technical btn btn-xs btn-yesno colorme">No</button>
             </div>
           </div>
           <div class="col-lg-2 col-sm-2 control-label">Fun</div>
           <div class="col-lg-4 col-sm-4">
             <div class="btn-group">
-              <button type="button" value="1.0" category="amusement" class="category amusement btn btn-success btn-xs btn-yesno colorme">Yes</button>
-              <button type="button" value="0.5" category="amusement" class="category amusement btn btn-warning btn-xs btn-maybe active">Maybe</button>
-              <button type="button" value="0.0" category="amusement" class="category amusement btn btn-danger btn-xs btn-yesno colorme">No</button>
+              <button type="button" value="1.0" category="amusement" class="category amusement btn btn-xs btn-yesno colorme">Yes</button>
+              <button type="button" value="0.5" category="amusement" class="category amusement btn btn-primary btn-xs btn-maybe">Maybe</button>
+              <button type="button" value="0.0" category="amusement" class="category amusement btn btn-xs btn-yesno colorme">No</button>
             </div>
           </div>
           <div class="col-lg-2 col-sm-2 control-label">Travel</div>
           <div class="col-lg-4 col-sm-4">
             <div class="btn-group">
-              <button type="button" value="4" category="hours" class="hours btn btn-success btn-xs btn-hours colorme active">4 h</button>
-              <button type="button" value="7" category="hours" class="hours btn btn-warning btn-xs btn-hours colorme">7 h</button>
-              <button type="button" value="10" category="hours" class="hours btn btn-danger btn-xs btn-hours colorme">10 h</button>
+              <button type="button" value="4" category="hours" class="hours btn btn-primary btn-xs btn-hours colorme">4 h</button>
+              <button type="button" value="7" category="hours" class="hours btn btn-xs btn-hours colorme">7 h</button>
+              <button type="button" value="10" category="hours" class="hours btn btn-xs btn-hours colorme">10 h</button>
             </div>
           </div>
 
