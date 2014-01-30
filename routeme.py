@@ -26,7 +26,7 @@ def index():
 @app.route("/route")
 def route():
 
-    city, country = request.args.get('origin').encode('utf8').split(',')
+    city, country = request.args.get('origin').split(',')
     origin = destin = CITYMAP[(city.strip(), country.strip())]
 
     dest = request.args.get('destin')
