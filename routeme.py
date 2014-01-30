@@ -1,3 +1,4 @@
+import re
 from time import time
 from random import choice
 from collections import defaultdict
@@ -23,28 +24,36 @@ def index():
     return render_template('index.html')
 
 
-@app.route("/route")
-def route():
+ONEWAY = re.compile(ur"(?P<days>\d+)-days-from-(?P<origin>\w+)-(?P<ocountry>\w+)-to-(?P<destin>\w+)-(?P<dcountry>\w+)-by-(?P<mode>\w+)", re.U)
+ROUND = re.compile(ur"(?P<days>\d+)-days-around-(?P<origin>\w+)-(?P<ocountry>\w+)-by-(?P<mode>\w+)", re.U)
 
-    city, country = request.args.get('origin').split(',')
-    origin = destin = CITYMAP[(city.strip(), country.strip())]
+# HTML
+@app.route("/<trip>", methods=['GET', 'POST'])
+def figure(trip):
 
-    dest = request.args.get('destin')
-    if dest:
-        dest, _ = dest.encode('utf8').split(',')
-        destin = CITYMAP[(dest.strip(), _.strip())]
-    else:
-        dest = city
+    args = ROUND.match(trip)
+    oneway = False
+    if args is None:
+        args = ONEWAY.match(trip)
+        oneway = True
 
-    try:
-        days = int(request.args.get('days'))
-    except ValueError:
-        return redirect("/")
-    mode = request.args.get('mode', 'transit').upper()[0]
+    if args is None:
+        redirect("/")
 
+    args = args.groupdict()
+
+
+    city = dest = ' '.join(args['origin'].split('_')).strip()
+    country = ' '.join(args['ocountry'].split('_')).strip()
+    origin = destin = CITYMAP[(city, country)]
+    if oneway:
+        dest = ' '.join(args['destin'].split('_')).strip()
+        destin = CITYMAP[(dest, ' '.join(args['dcountry'].split('_')).strip())]
+
+    days = int(args['days'])
+    mode = args['mode'][0].upper()
     hours = 4
-    routes = get_routes(origin, destin, mode,
-                        days, hours)
+    routes = get_routes(origin, destin, mode, days, hours)
     return render_template('route.html',
         cities=CITYJSON, routes=json.dumps(routes[:15]),
         links=json.dumps(LINKS[mode, hours]), mode=mode,

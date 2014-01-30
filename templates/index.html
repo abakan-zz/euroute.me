@@ -18,7 +18,7 @@
       <div class="row">
 
         <div class="col-lg-12">
-          <form action="route" method="get">
+          <form action="route" method="post">
             <div class="form-group" id="where">
               <label class="control-label" for="inputDefault">Where in Europe will you start?</label>
               <br/>
@@ -121,7 +121,17 @@ $('#submit button').click(function(){
   if (error){return}
 
   $("#mode").attr('value', $(this).attr("id"));
-  $("form").submit();
+  var origin = $("#origin").val().replace(', ', '-').replace(' ', '_');
+
+  var url = $("#days").val() + '-days-';
+  if ($("#destin").val() == "") {
+    url += 'around-' + origin + '-by-' + $(this).attr("id");
+  } else {
+    var destin = $("#destin").val().replace(', ', '-').replace(' ', '_');
+    url += 'from-' + origin + '-to-' + destin + '-by-' + $(this).attr("id");
+  }
+
+  $("form").attr('action', url).submit();
 });
 </script>
 {% endblock %}
