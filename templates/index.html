@@ -33,17 +33,17 @@
               </div>
             </div>
             <div class="form-group" id="ndays">
-              <label class="control-label" for="inputDefault">How many days will you stay?</label>
+              <label class="control-label" for="inputDefault">How long is your travel?</label>
               <br/>
               <div class="btn-group">
-                <button type="button" class="btn btn-warning btn-lg">3</button>
-                <button type="button" class="btn btn-warning btn-lg">4</button>
-                <button type="button" class="btn btn-warning btn-lg">5</button>
-                <button type="button" class="btn btn-warning btn-lg">6</button>
-                <button type="button" class="btn btn-warning btn-lg">7</button>
-                <button type="button" class="btn btn-warning btn-lg">8</button>
-                <button type="button" class="btn btn-warning btn-lg">9</button>
-                <button type="button" class="btn btn-warning btn-lg">10</button>
+                <button type="button" class="btn btn-warning" value="3">3</button>
+                <button type="button" class="btn btn-warning" value="4">4</button>
+                <button type="button" class="btn btn-warning" value="5">5</button>
+                <button type="button" class="btn btn-warning" value="6">6</button>
+                <button type="button" class="btn btn-warning" value="7">7</button>
+                <button type="button" class="btn btn-warning" value="8">8</button>
+                <button type="button" class="btn btn-warning" value="9">9</button>
+                <button type="button" class="btn btn-warning" value="10">10 days</button>
               </div>
                 <input type="hidden" name="days" id="days" value="" />
               </div>
@@ -83,7 +83,7 @@ $('#where > div.btn-group button').click(function(){
 
 $('#ndays > div.btn-group button').click(function(){
   $('#ndays > div.btn-group button').removeClass('btn-danger').addClass('btn-warning');
-  $("#days").attr('value', $(this).addClass('btn-danger').text());
+  $("#days").val($(this).addClass('btn-danger').val());
 });
 
 $('#origin').typeahead({
