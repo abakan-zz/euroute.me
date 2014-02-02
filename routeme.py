@@ -71,7 +71,7 @@ def cities():
     q = request.args.get('q').split(',')[0]
     sql = ("SELECT city.name, country.name "
            "FROM city JOIN country ON city.countryCode=country.code "
-           "WHERE city.name LIKE '{0}%' " #OR Country.name LIKE '{0}%'"
+           "WHERE city.oglinks > 0 AND city.name LIKE '{0}%' " #OR Country.name LIKE '{0}%'"
            #"LIMIT 10"
            ).format(q)
 

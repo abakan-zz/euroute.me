@@ -143,7 +143,8 @@ CITYMAP = {}
 CITYDATA = {}
 for cid, cnm, co, coco, lat, lng in dbh(
     "SELECT id, city.name, country.name, country.code, latitude, longitude "
-    "FROM city JOIN country ON city.countryCode=country.code"):
+    "FROM city JOIN country ON city.countryCode=country.code "
+    "WHERE city.oglinks > 0"):
     CITYMAP[(cnm, co)] = cid
     CITYDATA[cid] = {
         'name': cnm,
