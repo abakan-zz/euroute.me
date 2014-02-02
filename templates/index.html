@@ -87,16 +87,16 @@ $('#ndays > div.btn-group button').click(function(){
 });
 
 $('#origin').typeahead({
-  name: 'origin',
+  name: 'cities',
   prefetch: 'static/cities.json',
   //remote: '/json/cities?q=%QUERY',
   limit: 10
 });
 
 $('#destin').typeahead({
-  name: 'destin',
+  name: 'cities',
   //prefetch: '/q?cities=B',
-  remote: '/json/cities?q=%QUERY',
+  prefetch: 'static/cities.json',
   limit: 10
 });
 $(".twitter-typeahead:nth-of-type(2)").hide();
