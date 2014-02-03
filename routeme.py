@@ -21,7 +21,8 @@ execfile('router.py')
 # HTML
 @app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template('index.html',
+        days=0, origin='', destin='', oneway=-1)
 
 
 ONEWAY = re.compile(ur"(?P<days>\d+)-days-from-(?P<origin>\w+)-(?P<ocountry>\w+)-to-(?P<destin>\w+)-(?P<dcountry>\w+)-by-(?P<mode>\w+)", re.U)
@@ -48,7 +49,9 @@ def figure(trip):
         if 'ocountry' in args:
             country = ' '.join(args['ocountry'].split('_')).strip()
             origin = destin = CITYMAP[(city, country)]
+            ofails = city + ', ' + country
         else:
+            ofails = city
             origin = destin = CITYMAP[city]
     except KeyError:
         redirect('/')
@@ -57,9 +60,12 @@ def figure(trip):
         dest = ' '.join(args['destin'].split('_')).strip()
         try:
             if 'dcountry' in args:
-                destin = CITYMAP[(dest, ' '.join(args['dcountry'].split('_')).strip())]
+                country = ' '.join(args['dcountry'].split('_')).strip()
+                destin = CITYMAP[(dest, country)]
+                dfails = dest + ', ' + country
             else:
                 destin = CITYMAP[dest]
+                dfails = dest
         except KeyError:
             redirect('/')
 
@@ -70,15 +76,19 @@ def figure(trip):
     if mode not in "DT":
         redirect('/')
     routes, hours = get_scored_routes(origin, destin, mode, days, 4)
-    return render_template('route.html',
-        cities=CITYJSON, routes=json.dumps(routes[:15]),
-        links=json.dumps(LINKS[mode, 10]), mode=mode,
-        city=city, dest=dest, days=days, hours=hours,
-        origin=origin, destin=destin,
-        scores=json.dumps(get_scaled_scores()),
-        factoids=json.dumps(FACTOIDS),
-        around=["false", "true"][origin == destin],
-        gmap=bool(int(request.args.get("gmap", 1))))
+    if routes:
+        return render_template('route.html',
+            cities=CITYJSON, routes=json.dumps(routes[:15]),
+            links=json.dumps(LINKS[mode, 10]), mode=mode,
+            city=city, dest=dest, days=days, hours=hours,
+            origin=origin, destin=destin,
+            scores=json.dumps(get_scaled_scores()),
+            factoids=json.dumps(FACTOIDS),
+            around=["false", "true"][origin == destin],
+            gmap=bool(int(request.args.get("gmap", 1))))
+    else:
+        return render_template('index.html', fails=True,
+            origin=ofails, destin=dfails, days=days, oneway= origin != destin)
 
 
 # JSON

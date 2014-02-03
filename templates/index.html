@@ -17,33 +17,42 @@
 
       <div class="row">
 
+      {% if fails %}
+        <div class="col-lg-6">
+            <div class="alert alert-dismissable alert-danger">
+              <button type="button" class="close" data-dismiss="alert">×</button>
+              <strong>It looks like I cannot route you :(</strong> Can you try using suggested city and country names or select a longer travel duration?
+            </div>
+        </div>
+      {% endif %}
         <div class="col-lg-12">
           <form action="route" method="post">
+
             <div class="form-group" id="where">
               <label class="control-label" for="inputDefault">Where in Europe will you start?</label>
               <br/>
               <div>
-                <input type="text" name="origin" id="origin" placeholder="Start from ..." class="form-control input-lg col-md-3">
-                <input type="text" name="destin" id="destin" placeholder="Go to ..." class="form-control input-lg col-md-3">
+                <input type="text" name="origin" id="origin" placeholder="Start from ..." class="form-control input-lg col-md-3" value="{{ origin }}">
+                <input type="text" name="destin" id="destin" placeholder="Go to ..." class="form-control input-lg col-md-3" value="{{ destin }}">
               </div>
               <br/>
               <div class="btn-group">
-                <button type="button" class="btn btn-danger">Round trip</button>
-                <button type="button" class="btn btn-warning">One way</button>
+                <button type="button" class="btn {% if oneway == 0 %}btn-danger{% else %}btn-warning{% endif %}">Round trip</button>
+                <button type="button" class="btn {% if oneway == 1 %}btn-danger{% else %}btn-warning{% endif %}">One way</button>
               </div>
             </div>
             <div class="form-group" id="ndays">
               <label class="control-label" for="inputDefault">How long is your travel?</label>
               <br/>
               <div class="btn-group">
-                <button type="button" class="btn btn-warning" value="3">3</button>
-                <button type="button" class="btn btn-warning" value="4">4</button>
-                <button type="button" class="btn btn-warning" value="5">5</button>
-                <button type="button" class="btn btn-warning" value="6">6</button>
-                <button type="button" class="btn btn-warning" value="7">7</button>
-                <button type="button" class="btn btn-warning" value="8">8</button>
-                <button type="button" class="btn btn-warning" value="9">9</button>
-                <button type="button" class="btn btn-warning" value="10">10 days</button>
+                <button type="button" class="btn {% if days == 3 %}btn-danger{% else %}btn-warning{% endif %}" value="3">3</button>
+                <button type="button" class="btn {% if days == 4 %}btn-danger{% else %}btn-warning{% endif %}" value="4">4</button>
+                <button type="button" class="btn {% if days == 5 %}btn-danger{% else %}btn-warning{% endif %}" value="5">5</button>
+                <button type="button" class="btn {% if days == 6 %}btn-danger{% else %}btn-warning{% endif %}" value="6">6</button>
+                <button type="button" class="btn {% if days == 7 %}btn-danger{% else %}btn-warning{% endif %}" value="7">7</button>
+                <button type="button" class="btn {% if days == 8 %}btn-danger{% else %}btn-warning{% endif %}" value="8">8</button>
+                <button type="button" class="btn {% if days == 9 %}btn-danger{% else %}btn-warning{% endif %}" value="9">9</button>
+                <button type="button" class="btn {% if days == 10 %}btn-danger{% else %}btn-warning{% endif %}" value="10">10 days</button>
               </div>
                 <input type="hidden" name="days" id="days" value="" />
               </div>
@@ -99,8 +108,10 @@ $('#destin').typeahead({
   prefetch: 'static/cities.json',
   limit: 10
 });
-$(".twitter-typeahead:nth-of-type(2)").hide();
 
+{% if oneway == 0 %}
+$(".twitter-typeahead:nth-of-type(2)").hide();
+{% endif %}
 
 $('#submit button').click(function(){
   var error = false;

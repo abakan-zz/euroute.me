@@ -120,7 +120,7 @@ def get_routes(origin, destin, mode, days, hours, weights=WEIGHTS):
         routes = list(nx.all_simple_paths(graph, source=origin, target=destin,
                                           cutoff=ncity))
         if not routes:
-            while not routes:
+            while not routes and ncity < days:
                 print hours
                 if hours == 4:
                     hours = 7
