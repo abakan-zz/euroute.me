@@ -273,11 +273,11 @@ function showPage(city, place, url) {
 
 function showPlaces(cid) {
 
-  if (cid === config.infowin) {
-    cities[config.infowin].infowindow.close()
+  if (cid === config.infowin && 'infowin' in cities[cid]) {
+    cities[cid].infowindow.close()
     config.infowin = -1;
     return;
-  } else if (config.infowin >= 0) {
+  } else if (config.infowin >= 0 && 'infowin' in cities[config.infowin]) {
     cities[config.infowin].infowindow.close()
   }
   config.infowin = cid;
