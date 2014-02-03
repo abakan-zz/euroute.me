@@ -37,8 +37,8 @@
               </div>
               <br/>
               <div class="btn-group">
-                <button type="button" class="btn {% if oneway == 0 %}btn-danger{% else %}btn-warning{% endif %}">Round trip</button>
-                <button type="button" class="btn {% if oneway == 1 %}btn-danger{% else %}btn-warning{% endif %}">One way</button>
+                <button type="button" class="btn {% if not oneway %}btn-danger{% else %}btn-warning{% endif %}">Round trip</button>
+                <button type="button" class="btn {% if oneway %}btn-danger{% else %}btn-warning{% endif %}">One way</button>
               </div>
             </div>
             <div class="form-group" id="ndays">
@@ -57,7 +57,7 @@
                 <input type="hidden" name="days" id="days" value="" />
               </div>
               <div class="form-group" id="submit">
-                <button type="button" class="btn btn-success btn-lg" id="transit">
+                <button type="button" class="btn btn-success btn-lg" id="train">
                   <img class="glyphicon" src="/static/img/train.png"> Hop on a Train</button>
                 <button type="button" class="btn btn-info btn-lg" id="driving">
                   <img src="/static/img/car.png"> Hit the Road</button>
@@ -109,7 +109,7 @@ $('#destin').typeahead({
   limit: 10
 });
 
-{% if oneway == 0 %}
+{% if not oneway %}
 $(".twitter-typeahead:nth-of-type(2)").hide();
 {% endif %}
 

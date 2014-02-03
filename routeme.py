@@ -22,11 +22,25 @@ execfile('router.py')
 @app.route("/")
 def index():
     return render_template('index.html', fails=False,
-        days=0, origin='', destin='', oneway=-1)
+        days=0, origin='', destin='', oneway=0)
 
 
 ONEWAY = re.compile(ur"(?P<days>\d+)-days-from-(?P<origin>\w+)-(?P<ocountry>\w+)-to-(?P<destin>\w+)-(?P<dcountry>\w+)-by-(?P<mode>\w+)", re.U)
 ROUND = re.compile(ur"(?P<days>\d+)-days-around-(?P<origin>\w+)-(?P<ocountry>\w+)-by-(?P<mode>\w+)", re.U)
+
+
+def failure(args):
+
+    days = int(args['days'])
+    origin = (' '.join(args['origin'].split('_')).strip() + ', ' +
+              ' '.join(args['ocountry'].split('_')).strip())
+    if 'destin' in args:
+        destin = (' '.join(args['destin'].split('_')).strip() + ', ' +
+                  ' '.join(args['dcountry'].split('_')).strip())
+        oneway = True
+    return render_template('index.html', fails=True,
+        origin=origin, destin=destin, days=days, oneway=origin != destin)
+
 
 # HTML
 @app.route("/<trip>", methods=['GET', 'POST'])
@@ -49,12 +63,10 @@ def figure(trip):
         if 'ocountry' in args:
             country = ' '.join(args['ocountry'].split('_')).strip()
             origin = destin = CITYMAP[(city, country)]
-            ofails = city + ', ' + country
         else:
-            ofails = city
             origin = destin = CITYMAP[city]
     except KeyError:
-        redirect('/')
+        return failure(args)
 
     if oneway:
         dest = ' '.join(args['destin'].split('_')).strip()
@@ -63,18 +75,18 @@ def figure(trip):
                 country = ' '.join(args['dcountry'].split('_')).strip()
                 destin = CITYMAP[(dest, country)]
                 dfails = dest + ', ' + country
-            else:
                 destin = CITYMAP[dest]
-                dfails = dest
         except KeyError:
-            redirect('/')
+            return failure(args)
 
     days = int(args['days'])
     if not (3 <= days <= 10):
-        redirect('/')
+        return failure(args)
+
     mode = args['mode'][0].upper()
     if mode not in "DT":
-        redirect('/')
+        return failure(args)
+
     routes, hours = get_scored_routes(origin, destin, mode, days, 4)
     if routes:
         return render_template('route.html',
@@ -87,8 +99,7 @@ def figure(trip):
             around=["false", "true"][origin == destin],
             gmap=bool(int(request.args.get("gmap", 1))))
     else:
-        return render_template('index.html', fails=True,
-            origin=ofails, destin=dfails, days=days, oneway= origin != destin)
+        return failure(args)
 
 
 # JSON

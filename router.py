@@ -67,6 +67,8 @@ def get_graph(mode, hours):
 
     return graph
 
+get_graph('D', 10)
+get_graph('T', 10)
 
 def score_routes(routes, weights, oneway=True):
 
@@ -136,13 +138,13 @@ def get_routes(origin, destin, mode, days, hours, weights=WEIGHTS):
                                                   cutoff=ncity))
         else:
             roundway = origin == destin
-            print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
+            # print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
             if hours > 4:
-                routes.extend(get_routes(origin, destin, mode, days, 4, weights))
-                print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
+                routes.extend(get_routes(origin, destin, mode, days, 4, weights)[0])
+                # print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
             elif hours > 7:
-                routes.extend(get_routes(origin, destin, mode, days, 7, weights))
-                print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
+                routes.extend(get_routes(origin, destin, mode, days, 7, weights)[0])
+                # print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
         print('INFO: {} routes were calculated in {:.3f}'
               .format(len(routes), time() - start))
 
