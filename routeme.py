@@ -53,7 +53,7 @@ def figure(trip):
     days = int(args['days'])
     mode = args['mode'][0].upper()
     hours = 4
-    routes = get_routes(origin, destin, mode, days, hours)
+    routes = get_scored_routes(origin, destin, mode, days, hours)
     return render_template('route.html',
         cities=CITYJSON, routes=json.dumps(routes[:15]),
         links=json.dumps(LINKS[mode, hours]), mode=mode,
@@ -63,6 +63,7 @@ def figure(trip):
         factoids=json.dumps(FACTOIDS),
         oneway=["false", "true"][origin == destin],
         gmap=bool(int(request.args.get("gmap", 1))))
+
 
 # JSON
 def cities():
@@ -100,7 +101,6 @@ def places():
     return json.dumps(places)
 
 
-
 def reroute():
 
     origin = int(request.args.get('origin'))
@@ -113,7 +113,7 @@ def reroute():
                         float(request.args.get('technical')),
                         float(request.args.get('amusement')),
                         float(request.args.get('nature'))])
-    routes = get_routes(origin, destin, mode, days, hours, weights)[:15]
+    routes = get_scored_routes(origin, destin, mode, days, hours, weights)[:15]
     return json.dumps({
         'links': LINKS[mode, hours],
         'scores': get_scaled_scores(weights),

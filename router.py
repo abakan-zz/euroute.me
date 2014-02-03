@@ -13,9 +13,9 @@ dbh = DBHandle()
 
 # (num of days, max travel hours) -> number of cities
 NUMCITIES = {
-    (3, 4): 2, (4, 4): 2, (5, 4): 3, (6, 4): 3, (7, 4): 4, (8, 4): 4, (9, 4): 5, (10, 4): 5,
-    (3, 7): 2, (4, 7): 2, (5, 7): 3, (6, 7): 3, (7, 7): 3, (8, 7): 4, (9, 7): 4, (10, 7): 4,
-    (3, 10): 2, (4, 10): 2, (5, 10): 2, (6, 10): 3, (7, 10): 3, (8, 10): 4, (9, 10): 4, (10, 10): 4,
+    (3,  4): 2, (4,  4): 2, (5,  4): 3, (6,  4): 3, (7,  4): 4, (8,  4): 4, (9,  4): 5, (10,  4): 5,
+    (3,  7): 2, (4,  7): 2, (5,  7): 3, (6,  7): 3, (7,  7): 3, (8,  7): 3, (9,  7): 4, (10,  7): 4,
+    (3, 10): 2, (4, 10): 2, (5, 10): 2, (6, 10): 3, (7, 10): 3, (8, 10): 3, (9, 10): 4, (10, 10): 4,
 }
 
 # (travel mode, max hours) -> Graph
@@ -105,7 +105,6 @@ def get_scaled_scores(weights=WEIGHTS):
 
 def get_routes(origin, destin, mode, days, hours, weights=WEIGHTS):
 
-    total = time()
     key = (origin, destin, mode, days, hours)
     if key in ROUTES:
         routes = ROUTES[key]
@@ -121,12 +120,28 @@ def get_routes(origin, destin, mode, days, hours, weights=WEIGHTS):
                                           cutoff=ncity))
         print('INFO: {} routes were calculated in {:.3f}'
               .format(len(routes), time() - start))
+        roundway = origin == destin
+        print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
+        if hours > 4:
+            routes.extend(get_routes(origin, destin, mode, days, 4, weights))
+            print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
+        elif hours > 7:
+            routes.extend(get_routes(origin, destin, mode, days, 7, weights))
+            print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
 
         start = time()
         routes = filter_routes(routes)
         print('INFO: {} routes were selected in {:.3f}'
               .format(len(routes), time() - start))
         ROUTES[key] = routes
+
+
+    return routes
+
+def get_scored_routes(origin, destin, mode, days, hours, weights=WEIGHTS):
+
+    total = time()
+    routes = get_routes(origin, destin, mode, days, hours, weights)
     start = time()
     routes = score_routes(routes, weights, origin==destin)
     print('INFO: {} routes were scored in {:.3f}'
