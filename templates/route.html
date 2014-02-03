@@ -78,7 +78,7 @@ var routes = {{ routes|safe }};
 var scores = {{ scores|safe }};
 var origin = {{ origin }};
 var destin = {{ destin }};
-var oneway = {{ oneway }};
+var around = {{ around }};
 var config = {current: -1, days: {{ days }}, mode: "{{ mode }}", tabs: 1,
               active: 0, infowin: -1};
 var categories = {
@@ -186,7 +186,7 @@ function calcCenter(rid) {
 function calcCenter2(route) {
   var lat = 0.0;
   var lng = 0.0;
-  var count = route.length - oneway;
+  var count = route.length - around;
   for (i = 0; i < count; i++) {
     var city = cities[route[i]];
     lat += city.lat;
@@ -214,7 +214,7 @@ function showLine(i, j) {
     // position: calcCenter2([i, j]),
     // position: cities[i].coords,
     links[i][j].label = new MarkerWithLabel({
-       position: calcCenter2(oneway ? [i, j, 0] : [i, j]),
+       position: calcCenter2(around ? [i, j, 0] : [i, j]),
        draggable: false,
        map: map,
        labelContent: formatTime(time),
@@ -339,13 +339,18 @@ function showCity(i, n) {
     city.marker.setAnimation(google.maps.Animation.DROP);
   } else {
     city.coords = new google.maps.LatLng(city.lat, city.lng)
-    city.marker = new google.maps.Marker({
+    var options = {
       map: map,
       position: city.coords,
       title: city.name,
       animation: google.maps.Animation.DROP,
-      icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=' + n + '|FE6256|000000'
-    });
+    }
+
+    if (n) {
+      options.icon = 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=' + n + '|FE6256|000000';
+    }
+
+    city.marker = new google.maps.Marker(options);
     google.maps.event.addListener(city.marker,
       'click', function() {showPlaces(city.id)}
     );
@@ -418,7 +423,7 @@ var catmap = {
 function pickFactoids(r) {
   var facts = [];
   var route = routes[r].route;
-  for (i = 0; i < route.length - oneway; i++) {
+  for (i = 0; i < route.length - around; i++) {
     var cid = route[i]
     var cats = [];
     $('.category.btn-primary').each(function() {
@@ -469,11 +474,11 @@ function showTable(r) {
   var tbody = $("#rtable > tbody");
   $("#rtable > tbody > tr").remove();
   var route = routes[r].route;
-  var i, j, r = 0, city;
+  var i, j, d = 0, r = 0, city;
   var prev, append;
   var text, row, rows = [];
 
-  for (k = 0; k < route.length - oneway; k++) {
+  for (k = 0; k < route.length - around; k++) {
     j = route[k];
     city = cities[j];
     if (k && links[i][j].time > 300) {
@@ -481,16 +486,33 @@ function showTable(r) {
                   ' hours from ' + prev.name + ' to ' + city.name,
                   days: 1, score: 0, travel: true}
       r++;
+      d++;
     }
     rows[r] = {text: city.name, fact: facts[k],
-               days: 1, score: scores[j], cid: j, travel: false}
+               days: 0, score: scores[j], cid: j, travel: false}
     r++;
     i = j;
     prev = city;
   }
 
+  if (config.days - d >= route.length - around) {
+    for (k = 0; k < rows.length; k++) {
+      if (!rows[k].days) {
+        rows[k].days = 1;
+        d++;
+      }
+    }
+  } else if (config.days - d >= 2) {
+    rows[0].days = 1;
+    rows[rows.length-1].days = 1;
+    d += 2;
+  }
+
+
+  console.log(config.days - d)
+
   var max, val;
-  while (r < config.days) {
+  while (d < config.days) {
     val = 0;
     for (k = 0; k < rows.length; k++) {
       if (rows[k].score > val) {
@@ -500,20 +522,34 @@ function showTable(r) {
     }
     rows[max].days++;
     rows[max].score = scores[rows[max].cid] / rows[max].days;
-    r++;
+    d++;
   }
 
 
   i = 0;
   for (k = 0; k < rows.length; k++) {
       row = rows[k]
+      console.log(row)
       if (row.travel) {
         text = "1 day travel - " + (row.days > 1 ? "s":"") + " " + row.text;
         tbody.append($("<tr>").append($("<td>").append($('<em>').text(text))));
       } else {
         i++;
-        text = row.days + " day" + (row.days > 1 ? "s":"") + " in " + row.text;
-        tbody.append($("<tr>").append($("<td>").append($('<span>').addClass('label label-danger').text(i).css('font-size', '14px')).append($("<strong>").css('font-size', '18px').text(' ' + text)).append($('<em>').text(row.fact))).attr('cid', row.cid).css('cursor','pointer').click(function(){showPlaces($(this).attr('cid'))}));
+        if (row.days) {
+          text = row.days + " day" + (row.days > 1 ? "s":"") + " in " + row.text;
+          row.fact = $('<em>').text(row.fact);
+        } else {
+          if (i== 1) {
+            text = "Start in " + row.text;
+            row.fact = $('');
+          } else {
+            text = "Stop by in " + row.text;
+            row.fact = $('');
+
+          }
+        }
+
+        tbody.append($("<tr>").append($("<td>").append($('<span>').addClass('label label-danger').text(i).css('font-size', '14px')).append($("<strong>").css('font-size', '18px').text(' ' + text)).append(row.fact)).attr('cid', row.cid).css('cursor','pointer').click(function(){showPlaces($(this).attr('cid'))}));
       }
 
   }
@@ -564,7 +600,7 @@ $().ready(function() {
         hideRoute();
         {% endif %}
         routes = data.routes;
-        links = data.links;
+        //links = data.links;
         scores = data.scores;
         config.current = -1;
         {% if gmap %}
@@ -652,7 +688,7 @@ $().ready(function() {
     <div class="panel panel-primary">
       <div class="panel-heading">
         <h3 class="panel-title">Top routes for {{ days }} days
-          {% if oneway %} around {{city}} {% else %} from {{ city }} to {{ dest }} {% endif %}</h3>
+          {% if around %} around {{city}} {% else %} from {{ city }} to {{ dest }} {% endif %}</h3>
       </div>
       <div class="panel-body">
         <ul id="btn-route" class="nav nav-tabs" style="margin-bottom: 15px;">

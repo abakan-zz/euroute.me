@@ -116,18 +116,35 @@ def get_routes(origin, destin, mode, days, hours, weights=WEIGHTS):
               .format(time() - start))
 
         start = time()
+
         routes = list(nx.all_simple_paths(graph, source=origin, target=destin,
                                           cutoff=ncity))
+        if not routes:
+            while not routes:
+                print hours
+                if hours == 4:
+                    hours = 7
+                    graph = get_graph(mode, hours)
+                    ncity = NUMCITIES[days, hours]
+                elif hours == 7:
+                    hours = 10
+                    graph = get_graph(mode, hours)
+                    ncity = NUMCITIES[days, hours]
+                else:
+                    ncity += 1
+                routes = list(nx.all_simple_paths(graph, source=origin, target=destin,
+                                                  cutoff=ncity))
+        else:
+            roundway = origin == destin
+            print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
+            if hours > 4:
+                routes.extend(get_routes(origin, destin, mode, days, 4, weights))
+                print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
+            elif hours > 7:
+                routes.extend(get_routes(origin, destin, mode, days, 7, weights))
+                print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
         print('INFO: {} routes were calculated in {:.3f}'
               .format(len(routes), time() - start))
-        roundway = origin == destin
-        print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
-        if hours > 4:
-            routes.extend(get_routes(origin, destin, mode, days, 4, weights))
-            print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
-        elif hours > 7:
-            routes.extend(get_routes(origin, destin, mode, days, 7, weights))
-            print 'MAX: ', days, hours, '->', max((len(r) - roundway for r in routes))
 
         start = time()
         routes = filter_routes(routes)
