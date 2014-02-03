@@ -21,7 +21,7 @@ execfile('router.py')
 # HTML
 @app.route("/")
 def index():
-    return render_template('index.html',
+    return render_template('index.html', fails=False,
         days=0, origin='', destin='', oneway=-1)
 
 
