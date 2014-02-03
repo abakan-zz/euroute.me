@@ -101,8 +101,8 @@ function initialize() {
   };
   map = new google.maps.Map(document.getElementById('map-canvas'),
       mapOptions);
-  showCity(origin);
-  if (origin != destin) {showCity(destin)}
+  showCity(origin, 1);
+  if (origin != destin) {showCity(destin, 0)}
   showCircles();
   showRoute(0);
   makeTabs();
@@ -331,10 +331,11 @@ function showPlaces(cid) {
 
 }
 
-function showCity(i) {
+function showCity(i, n) {
   var city = cities[i];
   if (city.marker) {
     city.marker.setMap(map);
+    if (n) {city.marker.setIcon('http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=' + n + '|FE6256|000000')}
     city.marker.setAnimation(google.maps.Animation.DROP);
   } else {
     city.coords = new google.maps.LatLng(city.lat, city.lng)
@@ -342,7 +343,8 @@ function showCity(i) {
       map: map,
       position: city.coords,
       title: city.name,
-      animation: google.maps.Animation.DROP
+      animation: google.maps.Animation.DROP,
+      icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=' + n + '|FE6256|000000'
     });
     google.maps.event.addListener(city.marker,
       'click', function() {showPlaces(city.id)}
@@ -387,7 +389,7 @@ function showRoute(r) {
   for (k = 1; k < route.length - 1; k++) {
     var j = route[k];
     var city = cities[j];
-    showCity(j);
+    showCity(j, k + 1);
     showLine(i, j);
     //hideCity(j);
     //showCity(j);
@@ -502,15 +504,16 @@ function showTable(r) {
   }
 
 
-
+  i = 0;
   for (k = 0; k < rows.length; k++) {
       row = rows[k]
       if (row.travel) {
         text = "1 day travel - " + (row.days > 1 ? "s":"") + " " + row.text;
         tbody.append($("<tr>").append($("<td>").append($('<em>').text(text))));
       } else {
+        i++;
         text = row.days + " day" + (row.days > 1 ? "s":"") + " in " + row.text;
-        tbody.append($("<tr>").append($("<td>").append($("<strong>").css('font-size', '18px').text(text)).append($('<em>').text(row.fact))).attr('cid', row.cid).css('cursor','pointer').click(function(){showPlaces($(this).attr('cid'))}));
+        tbody.append($("<tr>").append($("<td>").append($('<span>').addClass('label label-danger').text(i).css('font-size', '14px')).append($("<strong>").css('font-size', '18px').text(' ' + text)).append($('<em>').text(row.fact))).attr('cid', row.cid).css('cursor','pointer').click(function(){showPlaces($(this).attr('cid'))}));
       }
 
   }
