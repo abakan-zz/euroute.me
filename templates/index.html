@@ -2,7 +2,7 @@
 {% block title %}EURoute.me - Make the most out of your Europe trip!{% endblock %}
 {% block head %}
     <link href="static/css/typeahead.css" rel="stylesheet">
-    <script src="static/js/typeahead.min.js"></script>
+    <script src="static/js/typeahead.bundle.min.js"></script>
 {% endblock %}
 {% block body %}
       <div class="page-header" id="banner">
@@ -95,18 +95,30 @@ $('#ndays > div.btn-group button').click(function(){
   $("#days").val($(this).addClass('btn-danger').val());
 });
 
-$('#origin').typeahead({
-  name: 'cities',
-  prefetch: 'static/cities.json',
-  //remote: '/json/cities?q=%QUERY',
-  limit: 10
+console.log(engine)
+
+var engine = new Bloodhound({
+  datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.name); },
+  queryTokenizer: Bloodhound.tokenizers.whitespace,
+  limit: 10,
+  prefetch: {
+    url: 'static/cities.json',
+    filter: function(list) {
+      return $.map(list, function(country) { return { name: country }; });
+    }
+  }
 });
 
-$('#destin').typeahead({
-  name: 'cities',
-  //prefetch: '/q?cities=B',
-  prefetch: 'static/cities.json',
-  limit: 10
+engine.initialize()
+
+$('#origin').typeahead(null, {
+  displayKey: 'name',
+  source: engine.ttAdapter()
+});
+
+$('#destin').typeahead(null, {
+  displayKey: 'name',
+  source: engine.ttAdapter()
 });
 
 {% if not oneway %}
@@ -129,7 +141,7 @@ $('#submit button').click(function(){
   } else {
     $("#where").removeClass('has-error');
   }
-
+  if (error){return}
   var dval = $("#destin").val();
   if (dval !== "" && dval.split(',').length != 2) {
     $("#where").addClass('has-error');
