@@ -17,4 +17,4 @@ start:
 	sudo supervisord -c supervisord.conf
 
 stop:
-	sudo kill $(cat supervisord.pid)
+	sudo kill $$(cat supervisord.pid)
