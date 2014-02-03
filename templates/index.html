@@ -122,20 +122,28 @@ $('#submit button').click(function(){
     $("#ndays").removeClass('has-error');
   }
 
-  if ($("#origin").val() === "") {
+  var oval = $("#origin").val();
+  if (oval === "" || oval.split(',').length != 2) {
     $("#where").addClass('has-error');
     error = true;
   } else {
     $("#where").removeClass('has-error');
   }
 
+  var dval = $("#destin").val();
+  if (dval !== "" && dval.split(',').length != 2) {
+    $("#where").addClass('has-error');
+    error = true;
+  } else {
+    $("#where").removeClass('has-error');
+  }
   if (error){return}
 
   $("#mode").attr('value', $(this).attr("id"));
   var origin = $("#origin").val().replace(', ', '-').replace(' ', '_');
 
   var url = $("#days").val() + '-days-';
-  if ($("#destin").val() == "") {
+  if (dval === "") {
     url += 'around-' + origin + '-by-' + $(this).attr("id");
   } else {
     var destin = $("#destin").val().replace(', ', '-').replace(' ', '_');
