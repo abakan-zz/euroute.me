@@ -80,7 +80,7 @@ var origin = {{ origin }};
 var destin = {{ destin }};
 var around = {{ around }};
 var config = {current: -1, days: {{ days }}, mode: "{{ mode }}", tabs: 1,
-              active: 0, infowin: -1};
+              active: 0, infowin: -1, houts: {{ hours }}};
 var categories = {
   art: 'Art Galleries and Collections',
   historic: 'History Museums and Historic Sights',
@@ -676,9 +676,9 @@ $().ready(function() {
           <div class="col-lg-2 col-sm-2 control-label">Travel</div>
           <div class="col-lg-4 col-sm-4">
             <div class="btn-group">
-              <button type="button" value="4" category="hours" class="hours btn btn-primary btn-xs btn-hours colorme">4 h</button>
-              <button type="button" value="7" category="hours" class="hours btn btn-xs btn-hours colorme">7 h</button>
-              <button type="button" value="10" category="hours" class="hours btn btn-xs btn-hours colorme">10 h</button>
+              <button type="button" value="4" category="hours" class="hours btn {% if hours == 4 %} btn-primary {% endif %} btn-xs btn-hours colorme">4 h</button>
+              <button type="button" value="7" category="hours" class="hours btn {% if hours == 7 %} btn-primary {% endif %} btn-xs btn-hours colorme">7 h</button>
+              <button type="button" value="10" category="hours" class="hours btn {% if hours == 10 %} btn-primary {% endif %} btn-xs btn-hours colorme">10 h</button>
             </div>
           </div>
 

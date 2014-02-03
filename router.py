@@ -153,12 +153,12 @@ def get_routes(origin, destin, mode, days, hours, weights=WEIGHTS):
         ROUTES[key] = routes
 
 
-    return routes
+    return routes, hours
 
 def get_scored_routes(origin, destin, mode, days, hours, weights=WEIGHTS):
 
     total = time()
-    routes = get_routes(origin, destin, mode, days, hours, weights)
+    routes, hours = get_routes(origin, destin, mode, days, hours, weights)
     start = time()
     routes = score_routes(routes, weights, origin==destin)
     print('INFO: {} routes were scored in {:.3f}'
@@ -167,7 +167,7 @@ def get_scored_routes(origin, destin, mode, days, hours, weights=WEIGHTS):
           .format(time() - total))
 
 
-    return [{'score': s, 'route': r} for s, r in routes]
+    return [{'score': s, 'route': r} for s, r in routes], hours
 
 # (city name, country name) -> city id
 CITYMAP = {}
@@ -178,6 +178,7 @@ for cid, cnm, co, coco, lat, lng in dbh(
     "FROM city JOIN country ON city.countryCode=country.code "
     "WHERE city.oglinks > 0"):
     CITYMAP[(cnm, co)] = cid
+    CITYMAP[cnm] = cid
     CITYDATA[cid] = {
         'name': cnm,
         #'co': co,

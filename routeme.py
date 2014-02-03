@@ -44,20 +44,36 @@ def figure(trip):
 
 
     city = dest = ' '.join(args['origin'].split('_')).strip()
-    country = ' '.join(args['ocountry'].split('_')).strip()
-    origin = destin = CITYMAP[(city, country)]
+    try:
+        if 'ocountry' in args:
+            country = ' '.join(args['ocountry'].split('_')).strip()
+            origin = destin = CITYMAP[(city, country)]
+        else:
+            origin = destin = CITYMAP[city]
+    except KeyError:
+        redirect('/')
+
     if oneway:
         dest = ' '.join(args['destin'].split('_')).strip()
-        destin = CITYMAP[(dest, ' '.join(args['dcountry'].split('_')).strip())]
+        try:
+            if 'dcountry' in args:
+                destin = CITYMAP[(dest, ' '.join(args['dcountry'].split('_')).strip())]
+            else:
+                destin = CITYMAP[dest]
+        except KeyError:
+            redirect('/')
 
     days = int(args['days'])
+    if not (3 <= days <= 10):
+        redirect('/')
     mode = args['mode'][0].upper()
-    hours = 4
-    routes = get_scored_routes(origin, destin, mode, days, hours)
+    if mode not in "DT":
+        redirect('/')
+    routes, hours = get_scored_routes(origin, destin, mode, days, 4)
     return render_template('route.html',
         cities=CITYJSON, routes=json.dumps(routes[:15]),
         links=json.dumps(LINKS[mode, 10]), mode=mode,
-        city=city, country=country, dest=dest, days=days,
+        city=city, dest=dest, days=days, hours=hours,
         origin=origin, destin=destin,
         scores=json.dumps(get_scaled_scores()),
         factoids=json.dumps(FACTOIDS),
@@ -113,7 +129,7 @@ def reroute():
                         float(request.args.get('technical')),
                         float(request.args.get('amusement')),
                         float(request.args.get('nature'))])
-    routes = get_scored_routes(origin, destin, mode, days, hours, weights)[:15]
+    routes, hours = get_scored_routes(origin, destin, mode, days, hours, weights)[:15]
     return json.dumps({
         'scores': get_scaled_scores(weights),
         'routes': routes,
