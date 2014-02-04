@@ -80,7 +80,7 @@ var origin = {{ origin }};
 var destin = {{ destin }};
 var around = {{ around }};
 var config = {current: -1, days: {{ days }}, mode: "{{ mode }}", tabs: 1,
-              active: 0, infowin: -1, houts: {{ hours }}};
+              active: 0, infowin: null, houts: {{ hours }}};
 var categories = {
   art: 'Art Galleries and Collections',
   historic: 'History Museums and Historic Sights',
@@ -272,12 +272,12 @@ function showPage(city, place, url) {
 }
 
 function showPlaces(cid) {
-
-  if (cid === config.infowin && 'infowin' in cities[cid]) {
+  cid = parseInt(cid);
+  if (cid == config.infowin && 'infowindow' in cities[cid]) {
     cities[cid].infowindow.close()
-    config.infowin = -1;
+    config.infowin = null;
     return;
-  } else if (config.infowin >= 0 && 'infowin' in cities[config.infowin]) {
+  } else if (config.infowin in cities && 'infowindow' in cities[config.infowin]) {
     cities[config.infowin].infowindow.close()
   }
   config.infowin = cid;
@@ -384,7 +384,13 @@ function zoomRoute(r) {
   map.fitBounds(bounds);
 };
 {% if gmap %}
+
 function showRoute(r) {
+if (config.infowin in cities && 'infowindow' in cities[config.infowin]) {
+    cities[config.infowin].infowindow.close()
+    config.infowin = null;
+  }
+
   config.active = r;
   hideRoute();
   map.setCenter(calcCenter(r));
@@ -509,8 +515,6 @@ function showTable(r) {
   }
 
 
-  console.log(config.days - d)
-
   var max, val;
   while (d < config.days) {
     val = 0;
@@ -528,8 +532,7 @@ function showTable(r) {
 
   i = 0;
   for (k = 0; k < rows.length; k++) {
-      row = rows[k]
-      console.log(row)
+      row = rows[k];
       if (row.travel) {
         text = "1 day travel - " + (row.days > 1 ? "s":"") + " " + row.text;
         tbody.append($("<tr>").append($("<td>").append($('<em>').text(text))));
