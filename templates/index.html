@@ -151,13 +151,13 @@ $('#submit button').click(function(){
   if (error){return}
 
   $("#mode").attr('value', $(this).attr("id"));
-  var origin = $("#origin").val().replace(', ', '-').replace(' ', '_');
+  var origin = $("#origin").val().replace(', ', '-').replace(/ /g, '_');
 
   var url = $("#days").val() + '-days-';
   if (dval === "") {
     url += 'around-' + origin + '-by-' + $(this).attr("id");
   } else {
-    var destin = $("#destin").val().replace(', ', '-').replace(' ', '_');
+    var destin = $("#destin").val().replace(', ', '-').replace(/ /g, '_');
     url += 'from-' + origin + '-to-' + destin + '-by-' + $(this).attr("id");
   }
 
