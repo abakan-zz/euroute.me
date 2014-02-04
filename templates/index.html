@@ -95,7 +95,6 @@ $('#ndays > div.btn-group button').click(function(){
   $("#days").val($(this).addClass('btn-danger').val());
 });
 
-console.log(engine)
 
 var engine = new Bloodhound({
   datumTokenizer: function(d) { return Bloodhound.tokenizers.whitespace(d.name); },
